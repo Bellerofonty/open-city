@@ -1,5 +1,8 @@
 ﻿# Запись на мероприятие на открытыйгород.рф с помощью Selenium
 
+import time
+from random import randint
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -46,17 +49,26 @@ def try_to_enroll(driver, wanted_event_url):
             (By.XPATH, '//button[contains(text(), "Записаться")]')))
         if enroll_button.text == 'ЗАПИСАТЬСЯ': # Исключить текст 'ЗАПИСАТЬСЯ НЕЛЬЗЯ'
             enroll_button.click()
-            return 'Успешно'
+            return 1
     except TimeoutException:
-        return 'Активная кнопка не обнаружена'
+        return 0
 
 
 def main():
-    wanted_event_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/ekskursii/avangard-za-narvskoj-zastavoj.html?date=2018-11-23%2011:00:00'
+    wanted_event_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/ekskursii/chto-rozhdaetsya-v-nedrax-zemli/?date=2018-12-05%2012:00:00'
     username, password = read_login_data('login_data.txt')
     driver = set_driver()
     login(driver, username, password)
-    print(try_to_enroll(driver, wanted_event_url))
+    while True:
+        result = try_to_enroll(driver, wanted_event_url)
+        if result:
+            print('Успешно', time.asctime())
+            break
+        else:
+            print('Активная кнопка не обнаружена', time.asctime())
+        time.sleep(randint(250, 450)) # Для имитации человека
+##    input()
+    driver.close()
 
 
 if __name__ == '__main__':
