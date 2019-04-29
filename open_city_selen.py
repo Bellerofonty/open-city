@@ -70,8 +70,14 @@ def try_to_enroll(driver, wanted_event_url):
             return 1
     except TimeoutException:
         print('_____timeout')
+        try:
+            enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Запись не началась")]')
+            print('_____',enroll_button.text)
+        except NoSuchElementException as ex:
+            print(ex)
         return 0
-
+    except NoSuchElementException as ex:
+            print(ex)
 
 def main():
     # wanted_event_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/ekskursii/dvorecz-i.i.-shuvalova.html?date=2018-12-07%2016:00:00'
