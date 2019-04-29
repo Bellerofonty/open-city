@@ -46,6 +46,14 @@ def try_to_enroll(driver, wanted_event_url):
     driver.get(wanted_event_url)
     # Ждать, пока не обнаружена нужная кнопка или не вышло время (15 сек)
     try:
+        try:
+            tour_quantity = driver.find_element_by_id('tour_quantity')
+            tour_quantity_balls = driver.find_element_by_id('tour_quantity_balls')
+            user_name = driver.find_element_by_xpath("//a[@href='lichnyij-kabinet/']")
+            print('_____{}/{} мест. {}'.format(tour_quantity.text, tour_quantity_balls.text, user_name.text.strip()))
+        except NoSuchElementException as ex:
+            print(ex)
+
         enroll_button = WebDriverWait(driver, 15).until(EC.presence_of_element_located(
             (By.XPATH, '//button[contains(text(), "Записаться")]')))
         # enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Записаться")]')
