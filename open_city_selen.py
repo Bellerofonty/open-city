@@ -47,9 +47,11 @@ def try_to_enroll(driver, wanted_event_url):
     # Ждать, пока не обнаружена нужная кнопка или не вышло время (15 сек)
     try:
         try:
+            tour_name = driver.find_element_by_tag_name('h1')
             tour_quantity = driver.find_element_by_id('tour_quantity')
             tour_quantity_balls = driver.find_element_by_id('tour_quantity_balls')
             user_name = driver.find_element_by_xpath("//a[@href='lichnyij-kabinet/']")
+            print('\n_____', tour_name.text)
             print('_____{}/{} мест. {}'.format(tour_quantity.text, tour_quantity_balls.text, user_name.text.strip()))
         except NoSuchElementException as ex:
             print(ex)
@@ -67,7 +69,7 @@ def try_to_enroll(driver, wanted_event_url):
         # Исключить текст 'ЗАПИСАТЬСЯ НЕЛЬЗЯ' и 'ЗАПИСАТЬСЯ ЗА БАЛЛЫ'
         if enroll_button.text == 'ЗАПИСАТЬСЯ':
             # print('_____', enroll_button)
-            print('_____', enroll_button.tag_name)
+            # print('_____', enroll_button.tag_name)
             print('_____', enroll_button.get_attribute("class"))
 
             btn_img = enroll_button.screenshot_as_png
@@ -90,7 +92,7 @@ def try_to_enroll(driver, wanted_event_url):
 def main():
     # wanted_event_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/ekskursii/dvorecz-i.i.-shuvalova.html?date=2018-12-07%2016:00:00'
     username, password = read_from_file('login_data.txt')
-    wanted_event_url = read_from_file('wanted_event_url.txt')[0]
+    event_urls = read_from_file('wanted_event_url.txt')
 
     while True:
         try:
@@ -102,16 +104,18 @@ def main():
             time.sleep(120)
 
     while True:
-        try:
-            result = try_to_enroll(driver, wanted_event_url)
-            if result:
-                print('_____Успешно', time.asctime())
-                break
-            else:
-                print('_____Активная кнопка не обнаружена', time.asctime())
-        except Exception as ex:
-            print('_____Ошибка:', ex)
-        time.sleep(randint(250, 450))  # Для имитации человека
+        for event_url in event_urls:
+            try:
+                result = try_to_enroll(driver, event_url)
+                if result:
+                    print('_____Успешно', time.asctime())
+                    break
+                else:
+                    print('_____Активная кнопка не обнаружена', time.asctime())
+            except Exception as ex:
+                print('_____Ошибка:', ex)
+            time.sleep(3)
+        time.sleep(randint(180, 300))  # Для имитации человека
     # input()
     driver.close()
 
