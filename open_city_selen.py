@@ -16,7 +16,7 @@ def read_from_file(file):
     with open(file) as f:
         data = []
         for line in f:
-            data.append(line.strip())
+            data.append(line.strip().split())
     return data
 
 
@@ -34,6 +34,7 @@ def login(driver, username, password):
     """Авторизация"""
     login_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/vxod.html'
     driver.get(login_url)
+    time.sleep(3)
     form_username = driver.find_element_by_name('username')
     form_password = driver.find_element_by_name('password')
     form_username.send_keys(username)
@@ -90,34 +91,36 @@ def try_to_enroll(driver, wanted_event_url):
             print(ex)
 
 def main():
-    # wanted_event_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/ekskursii/dvorecz-i.i.-shuvalova.html?date=2018-12-07%2016:00:00'
-    username, password = read_from_file('login_data.txt')
-    event_urls = read_from_file('wanted_event_url.txt')
+    try:
+        users_data = read_from_file('login_data.txt')
+        event_urls = read_from_file('wanted_event_url.txt')
+        driver = set_driver()
 
-    while True:
-        try:
-            driver = set_driver()
-            login(driver, username, password)
-            break
-        except Exception as ex:
-            print('_____Ошибка авторизации:', ex)
-            time.sleep(120)
+        for user_data in users_data:
+            while True:
+                try:
+                    login(driver, user_data[0], user_data[1])
+                except Exception as ex:
+                    print('_____Ошибка авторизации:', ex)
+                    time.sleep(120)
 
-    while True:
-        for event_url in event_urls:
-            try:
-                result = try_to_enroll(driver, event_url)
+                for event_url in event_urls:
+                    try:
+                        result = try_to_enroll(driver, event_url[0])
+                        if result:
+                            print('_____Успешно', time.asctime())
+                            break
+                        else:
+                            print('_____Активная кнопка не обнаружена', time.asctime())
+                    except Exception as ex:
+                        print('_____Ошибка:', ex)
+                    time.sleep(3)
                 if result:
-                    print('_____Успешно', time.asctime())
                     break
-                else:
-                    print('_____Активная кнопка не обнаружена', time.asctime())
-            except Exception as ex:
-                print('_____Ошибка:', ex)
-            time.sleep(3)
-        if result:
-            break
-        time.sleep(randint(180, 300))  # Для имитации человека
+                time.sleep(randint(180, 300))  # Для имитации человека
+
+    except Exception as ex:
+        print(ex)
     # input()
     driver.close()
 
