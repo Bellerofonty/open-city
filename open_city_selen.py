@@ -115,6 +115,8 @@ def main():
             except Exception as ex:
                 print('_____Ошибка:', ex)
             time.sleep(3)
+        if result:
+            break
         time.sleep(randint(180, 300))  # Для имитации человека
     # input()
     driver.close()
