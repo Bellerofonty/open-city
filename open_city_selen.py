@@ -24,6 +24,7 @@ def set_driver():
     """Создание драйвера"""
     chrome_options = Options()
     chrome_options.add_argument("--headless")  # Браузер без gui
+    chrome_options.add_argument('log-level=3')
     driver = webdriver.Chrome(
         executable_path=r'C:\Py files\web-scraping\chromedriver.exe',  # TODO getcwd
         options=chrome_options)
@@ -42,7 +43,7 @@ def login(driver, username, password):
         form_password.send_keys(password)
         driver.find_element_by_name('Login').click()
     except Exception as ex:
-        print('_____Ошибка авторизации:', ex)
+        print('Ошибка авторизации:', ex)
         time.sleep(60)
 
 
@@ -55,9 +56,10 @@ def try_to_enroll(driver, wanted_event_url):
             tour_name = driver.find_element_by_tag_name('h1')
             tour_quantity = driver.find_element_by_id('tour_quantity')
             tour_quantity_balls = driver.find_element_by_id('tour_quantity_balls')
+            tour_date = driver.find_element_by_id('tour_date')
             user_name = driver.find_element_by_xpath("//a[@href='lichnyij-kabinet/']")
-            print('\n_____', tour_name.text)
-            print('_____{}/{} мест. {}'.format(tour_quantity.text, tour_quantity_balls.text, user_name.text.strip()))
+            print('\n{} ({})'.format(tour_name.text, tour_date.text))
+            print('{}/{} мест. {}'.format(tour_quantity.text, tour_quantity_balls.text, user_name.text.strip()))
         except NoSuchElementException as ex:
             print(ex)
 
@@ -66,16 +68,14 @@ def try_to_enroll(driver, wanted_event_url):
         # enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Записаться")]')
         if 'loading' in enroll_button.get_attribute("class"):
             while 'loading' in enroll_button.get_attribute("class"):
-                print('_____loading')
+                print('loading')
                 time.sleep(60)
             enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Записаться")]')
-        print('_____', enroll_button.text)
+        print(enroll_button.text)
 
         # Исключить текст 'ЗАПИСАТЬСЯ НЕЛЬЗЯ' и 'ЗАПИСАТЬСЯ ЗА БАЛЛЫ'
         if enroll_button.text == 'ЗАПИСАТЬСЯ':
-            # print('_____', enroll_button)
-            # print('_____', enroll_button.tag_name)
-            print('_____', enroll_button.get_attribute("class"))
+            print(enroll_button.get_attribute("class"))
 
             btn_img = enroll_button.screenshot_as_png
             with open('btn_img.png', 'wb') as file:
@@ -84,10 +84,10 @@ def try_to_enroll(driver, wanted_event_url):
             enroll_button.click()
             return 1
     except TimeoutException:
-        print('_____timeout')
+        print('timeout')
         try:
             enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Запись не началась")]')
-            print('_____',enroll_button.text)
+            print(enroll_button.text)
         except NoSuchElementException as ex:
             print(ex)
         return 0
@@ -109,12 +109,12 @@ def main():
                     try:
                         result = try_to_enroll(driver, event_url[0])
                         if result:
-                            print('_____Успешно', time.asctime())
+                            print('Успешно', time.asctime())
                             break
                         else:
-                            print('_____Активная кнопка не обнаружена', time.asctime())
+                            print('Активная кнопка не обнаружена', time.asctime())
                     except Exception as ex:
-                        print('_____Ошибка:', ex)
+                        print('Ошибка:', ex)
                     time.sleep(3)
                 if result:
                     break
