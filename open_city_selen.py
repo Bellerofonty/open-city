@@ -33,13 +33,17 @@ def set_driver():
 def login(driver, username, password):
     """Авторизация"""
     login_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/vxod.html'
-    driver.get(login_url)
-    time.sleep(3)
-    form_username = driver.find_element_by_name('username')
-    form_password = driver.find_element_by_name('password')
-    form_username.send_keys(username)
-    form_password.send_keys(password)
-    driver.find_element_by_name('Login').click()
+    try:
+        driver.get(login_url)
+        time.sleep(3)
+        form_username = driver.find_element_by_name('username')
+        form_password = driver.find_element_by_name('password')
+        form_username.send_keys(username)
+        form_password.send_keys(password)
+        driver.find_element_by_name('Login').click()
+    except Exception as ex:
+        print('_____Ошибка авторизации:', ex)
+        time.sleep(60)
 
 
 def try_to_enroll(driver, wanted_event_url):
@@ -94,16 +98,13 @@ def main():
     try:
         users_data = read_from_file('login_data.txt')
         event_urls = read_from_file('wanted_event_url.txt')
+        log_out_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/vxod.html?service=logout'
         driver = set_driver()
 
         for user_data in users_data:
-            while True:
-                try:
-                    login(driver, user_data[0], user_data[1])
-                except Exception as ex:
-                    print('_____Ошибка авторизации:', ex)
-                    time.sleep(120)
+            login(driver, user_data[0], user_data[1])
 
+            while True:
                 for event_url in event_urls:
                     try:
                         result = try_to_enroll(driver, event_url[0])
@@ -117,12 +118,16 @@ def main():
                     time.sleep(3)
                 if result:
                     break
-                time.sleep(randint(180, 300))  # Для имитации человека
+                time.sleep(randint(120, 240))  # Для имитации человека
+            driver.get(log_out_url)
 
-    except Exception as ex:
+    except KeyboardInterrupt as ex:
         print(ex)
-    # input()
-    driver.close()
+    except:
+        import traceback
+        traceback.print_exc()
+    finally:
+        driver.close()
 
 
 if __name__ == '__main__':
