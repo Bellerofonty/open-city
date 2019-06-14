@@ -28,8 +28,10 @@ class EventsScan(QThread):
         self.delay = 5
         self.wanted_types = []
         self.stored_wanted_found = []
+        self.ignored_events_urls = []
 
     def run(self):
+        self.ignored_events_urls = self.get_ignored_events()
         while True:
             events_found = self.get_events(self.get_html())
             wanted_found = self.search_wanted(events_found)
@@ -50,6 +52,16 @@ class EventsScan(QThread):
                 time.sleep(0.01 * self.delay)
                 self.progress_signal.emit(i)
 
+    def get_ignored_events(self):
+        '''Получает из файла список url мероприятий, которые нужно игнорировать;
+        не добавляет пустые строки, если они есть в файле'''
+        with open('ignored_events.txt', 'r') as f:
+            ignored_events = []
+            for line in f:
+                if line.strip():
+                    ignored_events.append(line.strip())
+            return ignored_events
+
     def get_html(self):
         '''Запрос страницы доступных мероприятий'''
         return requests.get(self.URL, self.HEADERS).text
@@ -69,14 +81,20 @@ class EventsScan(QThread):
         '''Поиск желаемых типов мероприятий в списке, возвращает их описание'''
         wanted_found = []
         for event in events_found:
-            found_event_type = event.find('div', {'class': 'type'}).getText()
-            for wanted_type in self.wanted_types:
-                if wanted_type in found_event_type:
-                    event_title = event.find('div', {'class': 'title'}).getText()
-                    event_desc = event.find('div', {'class': 'info_right'}).getText()
-                    wanted_found.append(self.clr_spaces(event_title) +
-                            self.clr_spaces(found_event_type) + '\n' +
-                            self.clr_spaces(event_desc) + '\n')
+            event_url = event.find('div', {'class': 'info_right'}).find('a',
+                    {'class': 'button'})['href']
+            print(event_url)
+            if event_url in self.ignored_events_urls:
+                print('ignored:', event_url)
+            if event_url not in self.ignored_events_urls:
+                found_event_type = event.find('div', {'class': 'type'}).getText()
+                for wanted_type in self.wanted_types:
+                    if wanted_type in found_event_type:
+                        event_title = event.find('div', {'class': 'title'}).getText()
+                        event_desc = event.find('div', {'class': 'info_right'}).getText()
+                        wanted_found.append(self.clr_spaces(event_title) +
+                                self.clr_spaces(found_event_type) + '\n' +
+                                self.clr_spaces(event_desc) + '\n')
         if wanted_found:
             return wanted_found
         return ['Не найдено\n']
