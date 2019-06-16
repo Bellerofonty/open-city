@@ -116,6 +116,7 @@ def main():
                             print('Активная кнопка не обнаружена', time.asctime())
                     except Exception as ex:
                         print('Ошибка:', ex)
+                        result = False
                     time.sleep(3)
                 if result:
                     break
