@@ -13,7 +13,7 @@ from selenium.common.exceptions import NoSuchElementException
 
 
 def read_from_file(file):
-    """Чтение логина и пароля из файла"""
+    """Чтение логина и пароля, либо ссылки на мероприятие из файла"""
     with open(file) as f:
         data = []
         for line in f:
@@ -24,7 +24,7 @@ def read_from_file(file):
 def set_driver():
     """Создание драйвера"""
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Браузер без gui
+##    chrome_options.add_argument("--headless")  # Браузер без gui
     chrome_options.add_argument('log-level=3')
     driver = webdriver.Chrome(
         executable_path=r'C:\Py files\web-scraping\chromedriver.exe',  # TODO getcwd
@@ -34,12 +34,13 @@ def set_driver():
 
 def login(driver, username, password):
     """Авторизация"""
-    login_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/vxod.html'
+    login_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/kabinet/'
     try:
         driver.get(login_url)
-        time.sleep(3)
-        form_username = driver.find_element_by_name('username')
-        form_password = driver.find_element_by_name('password')
+        # TODO если нет соединения, повторить
+        time.sleep(5)
+        form_username = driver.find_element_by_name('USER_LOGIN')
+        form_password = driver.find_element_by_name('USER_PASSWORD')
         form_username.send_keys(username)
         form_password.send_keys(password)
         driver.find_element_by_name('Login').click()
@@ -51,46 +52,62 @@ def login(driver, username, password):
 def try_to_enroll(driver, wanted_event_url):
     """Попытка записи на мероприятие"""
     driver.get(wanted_event_url)
-    # Ждать, пока не обнаружена нужная кнопка или не вышло время (15 сек)
+    # Ждать, пока не обнаружена нужная кнопка или не вышло время (7 сек)
     try:
-        try:
-            tour_name = driver.find_element_by_tag_name('h1')
-            tour_quantity = driver.find_element_by_id('tour_quantity')
-            tour_quantity_balls = driver.find_element_by_id('tour_quantity_balls')
-            tour_date = driver.find_element_by_id('tour_date')
-            user_name = driver.find_element_by_xpath("//a[@href='lichnyij-kabinet/']")
-            print('\n{} ({})'.format(tour_name.text, tour_date.text))
-            print('{}/{} мест. {}'.format(tour_quantity.text, tour_quantity_balls.text, user_name.text.strip()))
-        except NoSuchElementException as ex:
-            print(ex)
+##        try:
+##            tour_name = driver.find_element_by_tag_name('h1')
+##            tour_quantity = driver.find_element_by_id('tour_quantity')
+##            tour_quantity_balls = driver.find_element_by_id('tour_quantity_balls')
+##            tour_date = driver.find_element_by_id('tour_date')
+##            user_name = driver.find_element_by_xpath("//a[@href='lichnyij-kabinet/']")
+##            print('\n{} ({})'.format(tour_name.text, tour_date.text))
+##            print('{}/{} мест. {}'.format(tour_quantity.text, tour_quantity_balls.text, user_name.text.strip()))
+##        except NoSuchElementException as ex:
+##            print(ex)
 
-        enroll_button = WebDriverWait(driver, 15).until(EC.presence_of_element_located(
-            (By.XPATH, '//button[contains(text(), "Записаться")]')))
+        enroll_button = WebDriverWait(driver, 7).until(EC.presence_of_element_located(
+                (By.XPATH, '//a[contains(text(), "Записаться")]')))
+##        enroll_button = WebDriverWait(driver, 7).until(EC.presence_of_element_located(
+##                (By.XPATH, '//a[contains(text(), "Парк «Дубки» в Сестрорецке")]')))
         # enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Записаться")]')
-        if 'loading' in enroll_button.get_attribute("class"):
-            while 'loading' in enroll_button.get_attribute("class"):
-                print('loading')
-                time.sleep(60)
-            enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Записаться")]')
-        print(enroll_button.text)
+##        if 'loading' in enroll_button.get_attribute("class"):
+##            while 'loading' in enroll_button.get_attribute("class"):
+##                print('loading')
+##                time.sleep(60)
+##            enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Записаться")]')
+##        print(enroll_button.text)
 
         # Исключить текст 'ЗАПИСАТЬСЯ НЕЛЬЗЯ' и 'ЗАПИСАТЬСЯ ЗА БАЛЛЫ'
-        if enroll_button.text == 'ЗАПИСАТЬСЯ':
-            print(enroll_button.get_attribute("class"))
+##        if enroll_button.text == 'ЗАПИСАТЬСЯ':
+##            print(enroll_button.get_attribute("class"))
 
-            btn_img = enroll_button.screenshot_as_png
-            with open('btn_img.png', 'wb') as file:
-                file.write(btn_img)
+        btn_img = enroll_button.screenshot_as_png
+        with open('btn_img.png', 'wb') as file:
+            file.write(btn_img)
 
-            enroll_button.click()
-            return 1
+##        from selenium.webdriver.common.action_chains import ActionChains
+##        actions = ActionChains(driver)
+##        actions.move_to_element(enroll_button).perform()
+        driver.execute_script("window.scrollTo(0, 700)")
+        btn_img = enroll_button.screenshot_as_png
+        with open('btn_img2.png', 'wb') as file:
+            file.write(btn_img)
+        enroll_button.click()
+        return 1
     except TimeoutException:
         print('timeout')
-        try:
-            enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Запись не началась")]')
-            print(enroll_button.text)
-        except NoSuchElementException as ex:
-            print(ex)
+##        try:
+##            enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Запись не началась")]')
+##            print(enroll_button.text)
+##        except NoSuchElementException as ex:
+##            print(ex)
+        """
+        TODO
+        check network by ping
+        if connection:
+            driver.close()
+            restart script with sys.exec*
+        """
         return 0
     except NoSuchElementException as ex:
             print(ex)
@@ -99,7 +116,7 @@ def main():
     try:
         users_data = read_from_file('login_data.txt')
         event_urls = read_from_file('wanted_event_url.txt')
-        log_out_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/vxod.html?service=logout'
+        log_out_url = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/kabinet/?logout=yes'
         driver = set_driver()
 
         for user_data in users_data:
@@ -120,7 +137,9 @@ def main():
                     time.sleep(3)
                 if result:
                     break
+                # TODO restart script every hour
                 time.sleep(randint(120, 240))  # Для имитации человека
+            time.sleep(5)
             driver.get(log_out_url)
 
     except KeyboardInterrupt as ex:
