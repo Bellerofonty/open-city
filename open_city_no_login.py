@@ -7,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QThread, pyqtSignal
+import winsound
 
 import open_city_widget
 
@@ -14,7 +15,6 @@ import open_city_widget
 class EventsScan(QThread):
     '''Циклический поиск мероприятий (отдельный поток)'''
 
-    URL = 'https://xn--c1acndtdamdoc1ib.xn--p1ai/ekskursii-zapis-otkryita.html'
     HEADERS = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) '\
                 'AppleWebKit/537.36 (KHTML, like Gecko) '\
                 'Chrome/69.0.3497.100 Safari/537.36'}
@@ -29,23 +29,21 @@ class EventsScan(QThread):
         self.wanted_types = []
         self.stored_wanted_found = []
         self.ignored_events_urls = []
+        self.URL = self.read_from_file('wanted_event_url.txt')
 
     def run(self):
-        self.ignored_events_urls = self.get_ignored_events()
         while True:
-            events_found = self.get_events(self.get_html())
-            wanted_found = self.search_wanted(events_found)
-
-            # Результат изменился -> вывод в лог
-            if not self.stored_wanted_found == wanted_found:
-                for event in wanted_found:
-                    self.result_signal.emit(event)
-                self.result_signal.emit('--'*36 + '\n') # Разделитель запросов
-                self.stored_wanted_found = wanted_found
-
-                # Если "Не найдено" - 1й результат -> не сигнализировать
-                if not wanted_found[0] == 'Не найдено\n':
-                    self.success_signal.emit()
+            html = self.get_html()
+            bs = BeautifulSoup(html, 'html.parser')
+            status = bs.find('div', {'class': 'status'}).getText()
+            status = ' '.join(status.split())
+            if 'Запись открыта' in status:
+                self.result_signal.emit('ЗАПИСЬ ОТКРЫТА\n')
+                self.success_signal.emit()
+                import open_city_selen
+                open_city_selen.main()
+            else:
+                self.result_signal.emit(status + '\n')
 
             # Обновление индикатора времени ожидания
             for i in range(1, 101):
@@ -83,7 +81,7 @@ class EventsScan(QThread):
         for event in events_found:
             event_url = event.find('div', {'class': 'info_right'}).find('a',
                     {'class': 'button'})['href']
-            print(event_url)
+##            print(event_url)
             if event_url in self.ignored_events_urls:
                 print('ignored:', event_url)
             if event_url not in self.ignored_events_urls:
@@ -92,12 +90,17 @@ class EventsScan(QThread):
                     if wanted_type in found_event_type:
                         event_title = event.find('div', {'class': 'title'}).getText()
                         event_desc = event.find('div', {'class': 'info_right'}).getText()
-                        wanted_found.append(self.clr_spaces(event_title) +
+                        wanted_found.append([self.clr_spaces(event_title) +
                                 self.clr_spaces(found_event_type) + '\n' +
-                                self.clr_spaces(event_desc) + '\n')
+                                self.clr_spaces(event_desc) + '\n', event_url])
         if wanted_found:
             return wanted_found
         return ['Не найдено\n']
+
+    def read_from_file(self, file):
+        """Чтение ссылки на мероприятие из файла"""
+        with open(file) as f:
+            return f.readline()
 
 
 class OpenCityApp(QtWidgets.QWidget, open_city_widget.Ui_Form):
@@ -131,6 +134,9 @@ class OpenCityApp(QtWidgets.QWidget, open_city_widget.Ui_Form):
 
     def show_result(self, result):
         '''Добавляет запись в лог и проматывает его вниз'''
+##        if len(result) > 1:
+##            print(result)
+##        self.log.textCursor().insertText('--'*32 + '\n') # Разделитель запросов
         self.log.textCursor().insertText(result)
         self.log.ensureCursorVisible()
 
@@ -156,6 +162,8 @@ class OpenCityApp(QtWidgets.QWidget, open_city_widget.Ui_Form):
         self.setPalette(pal)
         self.showNormal()
         self.activateWindow()
+
+        winsound.PlaySound('bell-ringing.wav', winsound.SND_FILENAME)
 
     def reset_color(self):
         '''Исходный цвет фона. Нажата кнопка "Сброс цвета",
@@ -201,5 +209,3 @@ def main():
 
 if __name__=='__main__':
     main()
-
-
