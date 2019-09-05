@@ -67,27 +67,7 @@ def try_to_enroll(driver, wanted_event_url):
 
         enroll_button = WebDriverWait(driver, 7).until(EC.presence_of_element_located(
                 (By.XPATH, '//a[contains(text(), "Записаться")]')))
-##        enroll_button = WebDriverWait(driver, 7).until(EC.presence_of_element_located(
-##                (By.XPATH, '//a[contains(text(), "Парк «Дубки» в Сестрорецке")]')))
         # enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Записаться")]')
-##        if 'loading' in enroll_button.get_attribute("class"):
-##            while 'loading' in enroll_button.get_attribute("class"):
-##                print('loading')
-##                time.sleep(60)
-##            enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Записаться")]')
-##        print(enroll_button.text)
-
-        # Исключить текст 'ЗАПИСАТЬСЯ НЕЛЬЗЯ' и 'ЗАПИСАТЬСЯ ЗА БАЛЛЫ'
-##        if enroll_button.text == 'ЗАПИСАТЬСЯ':
-##            print(enroll_button.get_attribute("class"))
-
-##        btn_img = enroll_button.screenshot_as_png
-##        with open('btn_img.png', 'wb') as file:
-##            file.write(btn_img)
-
-##        from selenium.webdriver.common.action_chains import ActionChains
-##        actions = ActionChains(driver)
-##        actions.move_to_element(enroll_button).perform()
         driver.execute_script("window.scrollTo(0, 900)")
         btn_img = enroll_button.screenshot_as_png
         with open('btn_img1.png', 'wb') as file:
@@ -112,11 +92,6 @@ def try_to_enroll(driver, wanted_event_url):
         return 1
     except TimeoutException:
         print('timeout')
-##        try:
-##            enroll_button = driver.find_element_by_xpath('//button[contains(text(), "Запись не началась")]')
-##            print(enroll_button.text)
-##        except NoSuchElementException as ex:
-##            print(ex)
         """
         TODO
         check network by ping
