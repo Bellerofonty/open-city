@@ -81,18 +81,34 @@ def try_to_enroll(driver, wanted_event_url):
 ##        if enroll_button.text == 'ЗАПИСАТЬСЯ':
 ##            print(enroll_button.get_attribute("class"))
 
-        btn_img = enroll_button.screenshot_as_png
-        with open('btn_img.png', 'wb') as file:
-            file.write(btn_img)
+##        btn_img = enroll_button.screenshot_as_png
+##        with open('btn_img.png', 'wb') as file:
+##            file.write(btn_img)
 
 ##        from selenium.webdriver.common.action_chains import ActionChains
 ##        actions = ActionChains(driver)
 ##        actions.move_to_element(enroll_button).perform()
-        driver.execute_script("window.scrollTo(0, 700)")
+        driver.execute_script("window.scrollTo(0, 900)")
         btn_img = enroll_button.screenshot_as_png
-        with open('btn_img2.png', 'wb') as file:
+        with open('btn_img1.png', 'wb') as file:
             file.write(btn_img)
         enroll_button.click()
+
+        time.sleep(3)
+        ordinary_enroll_button = driver.find_element_by_xpath('//a[contains(text(), "Обычная запись")]')
+        btn_img = ordinary_enroll_button.screenshot_as_png
+        with open('btn_img2.png', 'wb') as file:
+            file.write(btn_img)
+        ordinary_enroll_button.click()
+
+        time.sleep(3)
+        driver.execute_script("window.scrollTo(0, 1500)")
+        finally_enroll_button = driver.find_element_by_xpath('//button[contains(@class, "m-top-big")]')
+        btn_img = finally_enroll_button.screenshot_as_png
+        with open('btn_img3.png', 'wb') as file:
+            file.write(btn_img)
+        finally_enroll_button.click()
+
         return 1
     except TimeoutException:
         print('timeout')
