@@ -1,9 +1,10 @@
 '''Мониторинг появления мероприятий интересующих типов на сайте'''
+import os
 import sys
 import re
 import time
-
 import requests
+
 from bs4 import BeautifulSoup
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -22,6 +23,7 @@ class EventsScan(QThread):
     result_signal = pyqtSignal(str)
     progress_signal = pyqtSignal(int)
     success_signal = pyqtSignal()
+    restart_signal = pyqtSignal()
 
     def __init__(self, parent = None):
         QThread.__init__(self, parent)
@@ -30,9 +32,16 @@ class EventsScan(QThread):
         self.stored_wanted_found = []
         self.ignored_events_urls = []
         self.URL = self.read_from_file('wanted_event_url.txt')
+        self.start_time = time.time()
 
     def run(self):
         while True:
+            run_time = time.time() - self.start_time
+            if run_time > 1800: # перезапуск программы раз в полчаса
+                if not 'start' in sys.argv:
+                    sys.argv.append('start')
+                self.restart_signal.emit()
+
             html = self.get_html()
             bs = BeautifulSoup(html, 'html.parser')
             status = bs.find('div', {'class': 'status'}).getText()
@@ -118,8 +127,12 @@ class OpenCityApp(QtWidgets.QWidget, open_city_widget.Ui_Form):
         self.thread.finished.connect(self.on_finished)
         self.thread.progress_signal.connect(self.show_progress)
         self.thread.success_signal.connect(self.success_alarm)
+        self.thread.restart_signal.connect(self.restart_program)
 
         self.reset_color()
+        if 'start' in sys.argv:
+            self.start_scan()
+
 
     def start_scan(self):
         '''Нажата кнопка "Старт"'''
@@ -201,11 +214,18 @@ class OpenCityApp(QtWidgets.QWidget, open_city_widget.Ui_Form):
             delay = 600
         return delay
 
+    def restart_program(self):
+        '''Перезапускает программу, очищая открытые файлы и дескрипторы'''
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
+
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
     window = OpenCityApp()
     window.show()
     app.exec_()
+
 
 if __name__=='__main__':
     main()
