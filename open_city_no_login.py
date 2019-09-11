@@ -34,6 +34,7 @@ class EventsScan(QThread):
         self.start_time = time.time()
 
     def run(self):
+        while True:
             html = self.get_html()
             bs = BeautifulSoup(html, 'html.parser')
 
