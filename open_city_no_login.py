@@ -44,7 +44,12 @@ class EventsScan(QThread):
 
             html = self.get_html()
             bs = BeautifulSoup(html, 'html.parser')
-            status = bs.find('div', {'class': 'status'}).getText()
+
+            try:
+                status = bs.find('div', {'class': 'status'}).getText()
+            except AttributeError:
+                status = 'Ошибка запроса {}'.format(time.asctime())
+
             status = ' '.join(status.split())
             if 'Запись открыта' in status:
                 self.result_signal.emit('ЗАПИСЬ ОТКРЫТА\n')
@@ -71,7 +76,12 @@ class EventsScan(QThread):
 
     def get_html(self):
         '''Запрос страницы доступных мероприятий'''
-        return requests.get(self.URL, self.HEADERS).text
+        while True:
+            try:
+                return requests.get(self.URL, self.HEADERS).text
+            except Exception as ex:
+                print(ex)
+                time.sleep(10)
 
     def get_events(self, html):
         '''Получение списка блоков-мероприятий из html'''
